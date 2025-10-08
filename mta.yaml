@@ -1,0 +1,101 @@
+_schema-version: 3.3.0
+ID: CapMediaHandling
+description: A simple CAP project.
+version: 1.0.0
+modules:
+  - name: CapMediaHandling-srv
+    type: nodejs
+    path: gen/srv
+    provides:
+      - name: srv-api
+        properties:
+          srv-url: ${default-url}
+    parameters:
+      buildpack: nodejs_buildpack
+      instances: 1
+    build-parameters:
+      builder: npm-ci
+    requires:
+      - name: CapMediaHandling-auth
+      - name: CapMediaHandling-db
+  - name: CapMediaHandling-app-content
+    type: com.sap.application.content
+    path: .
+    requires:
+      - name: CapMediaHandling-repo-host
+        parameters:
+          content-target: true
+    build-parameters:
+      build-result: resources
+      requires:
+        - artifacts:
+            - uploadui.zip
+          name: uploadui
+          target-path: resources/
+  - name: uploadui
+    type: html5
+    path: app/uploadui
+    build-parameters:
+      build-result: dist
+      builder: custom
+      commands:
+        - npm install
+        - npm run build:cf
+      supported-platforms:
+        []
+
+  - name: CapMediaHandling-db-deployer
+    type: hdb
+    path: gen/db
+    parameters:
+      buildpack: nodejs_buildpack
+    requires:
+      - name: CapMediaHandling-db
+resources:
+  - name: CapMediaHandling-repo-host
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: html5-apps-repo
+      service-name: CapMediaHandling-html5-service
+      service-plan: app-host
+  - name: CapMediaHandling-destination-service
+    type: org.cloudfoundry.managed-service
+    parameters:
+      config:
+        HTML5Runtime_enabled: false
+        init_data:
+          instance:
+            destinations:
+              - Authentication: NoAuthentication
+                Name: ui5
+                ProxyType: Internet
+                Type: HTTP
+                URL: https://ui5.sap.com
+            existing_destinations_policy: update
+        version: 1.0.0
+      service: destination
+      service-name: CapMediaHandling-destination-service
+      service-plan: lite
+  - name: CapMediaHandling-auth
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: xsuaa
+      service-plan: application
+      path: ./xs-security.json
+      config:
+        xsappname: CapMediaHandling-${org}-${space}
+        tenant-mode: dedicated
+  - name: CapMediaHandling-db
+    type: com.sap.xs.hdi-container
+    parameters:
+      service: hana
+      service-plan: hdi-shared
+parameters:
+  deploy_mode: html5-repo
+  enable-parallel-deployments: true
+build-parameters:
+  before-all:
+    - builder: custom
+      commands:
+        - npm ci
+        - npx cds build --production

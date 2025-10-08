@@ -1,0 +1,68 @@
+<mvc:View
+    controllerName="uploadui.controller.Main"
+    displayBlock="true"
+    xmlns="sap.m"
+    xmlns:cu="uploadui.control"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns:u="sap.ui.unified"
+>
+    <Page
+        id="page"
+        title="{i18n>appTitle}"
+    >
+        <content>
+            <List
+                id="_IDGenList"
+                items="{Backend>/Pictures}"
+                headerText="Products"
+            >
+                <ObjectListItem
+                    id="_IDGenObjectListItem1"
+                    title="{= '/odata/v4/media/Pictures(' + ${Backend>ID} + ')/content'}"
+                    type="Active"
+                    press="onDownloadAttachment"
+                />
+				
+            </List>
+            <VBox
+                id="_IDGenVBox1"
+                alignItems="Center"
+                justifyContent="Center"
+                height="100%"
+            >
+                <cu:CustomFileUploader
+                    id="FileUploader"
+                    uploadUrl="/odata/v4/media/Pictures"
+                    uploadComplete="onUploadComplete"
+                />
+
+                <Button
+                    id="_IDGenButton"
+                    text="{i18n>main.UploadFile}"
+                    press="handleUploadPress"
+                />
+            </VBox>
+            <List
+                id="ListOfPictures"
+                headerText="{i18n>main.PictureList.headerText}"
+                items="{Backend>/Pictures}"
+            >
+                <items>
+                    <CustomListItem id="_IDGenCustomListItem">
+                        <Text
+                            id="_IDGenText"
+                            text="{Backend>ID}"
+                        />
+                        <!-- <Image id="_IDGenImage" src="/odata/v4/media/Pictures({Backend>ID})/content"
+									decorative="false" />  -->
+                        <Image
+                            id="_IDGenImage"
+                            src="{= '/odata/v4/media/Pictures(' + ${Backend>ID} + ')/content'}"
+                            decorative="false"
+                        />
+                    </CustomListItem>
+                </items>
+            </List>
+        </content>
+    </Page>
+</mvc:View>
